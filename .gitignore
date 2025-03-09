@@ -1,0 +1,4 @@
+node_modules
+.env
+.local_env
+.supa_env
