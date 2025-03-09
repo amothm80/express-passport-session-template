@@ -25,6 +25,12 @@ app.use(express.urlencoded({extended: true}));
  * -------------- SESSION SETUP ----------------
  */
 
+/**
+ * utilizes connect-pg-simple. requires postgres database
+ * use the below command to create the session table
+ * psql mydatabase < node_modules/connect-pg-simple/table.sql
+ */
+
 app.use(
   session({
     store: new pgSession({
