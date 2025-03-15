@@ -1,12 +1,10 @@
 import path from "node:path";
-import { fileURLToPath } from "url";
 import "dotenv/config";
-import pg from "pg";
 import express from "express";
 import session from "express-session";
 import passport from "passport";
-import passportlocal from "passport-local";
-import crypto from 'crypto';
+import helmet from 'helmet';
+import crypto from "crypto";
 import pgSimple from "connect-pg-simple";
 import { pool } from "./config/database.js";
 import { __dirname } from "./lib/dirname.js";
@@ -16,10 +14,15 @@ const pgSession = pgSimple(session);
 const app = express();
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "pug");
+app.disable('x-powered-by');
+app.use((req, res, next) => {
+    res.removeHeader('Server');
+    next();
+});
+app.use(helmet())
 
 app.use(express.json());
-app.use(express.urlencoded({extended: true}));
-
+app.use(express.urlencoded({ extended: true }));
 
 /**
  * -------------- SESSION SETUP ----------------
@@ -31,11 +34,13 @@ app.use(express.urlencoded({extended: true}));
  * psql mydatabase < node_modules/connect-pg-simple/table.sql
  */
 
+const sessionStore = new pgSession({
+  pool: pool, // Connection pool
+});
+
 app.use(
   session({
-    store: new pgSession({
-      pool: pool, // Connection pool
-    }),
+    store: sessionStore,
     secret: process.env.SESSION_SECRET,
     resave: false,
     cookie: { maxAge: 24 * 60 * 60 * 1000 }, // 1 days,
@@ -48,9 +53,13 @@ app.use(
 /**
  * -------------- PASSPORT AUTHENTICATION ----------------
  */
-
+import './config/passport.js';
 app.use(passport.session());
 
+app.use((req,res,next)=>{
+  console.log(req.user)
+  next()
+})
 
 /**
  * -------------- ROUTES ----------------
@@ -59,10 +68,20 @@ app.use(passport.session());
 // Imports all of the routes from ./routes/index.js
 app.use(router);
 
+/**
+ * Error
+ */
+
+app.use((err,req,res,next)=>{
+  console.error(new Date().toISOString())
+  console.log(err)
+  res.status(500).send(`Something broke!`)
+})
 
 /**
  * -------------- SERVER ----------------
  */
 
 // Server listens on http://localhost:3000
-app.listen(3000,() => console.log("app listening on port 3000"));
+app.listen(3000, () => console.log("app listening on port 3000"));
+
