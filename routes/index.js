@@ -10,16 +10,18 @@ export const router = express.Router();
 /**
  * -------------- POST ROUTES ----------------
  */
+// both options below will work. req.session.xxx can be used to 
+// send information during redirect
+// OPTION 1
+router.post(
+  "/login",
+  passport.authenticate("local", {
+    failureRedirect: "/login-failure",
+    successRedirect: "login-success"
+  })
+);
 
-// TODO
-// router.post(
-//   "/login",
-//   passport.authenticate("local", {
-//     failureRedirect: "/login-failure",
-//     successRedirect: "login-success"
-//   })
-// );
-
+//OPTION 2
 router.post("/login", function (req, res, next) {
   passport.authenticate("local", function (err, user, info) {
     if (err) {
