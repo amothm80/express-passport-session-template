@@ -12,13 +12,33 @@ export const router = express.Router();
  */
 
 // TODO
-router.post(
-  "/login",
-  passport.authenticate("local", {
-    failureRedirect: "/login-failure",
-    successRedirect: "login-success"
-  })
-);
+// router.post(
+//   "/login",
+//   passport.authenticate("local", {
+//     failureRedirect: "/login-failure",
+//     successRedirect: "login-success"
+//   })
+// );
+
+router.post("/login", function (req, res, next) {
+  passport.authenticate("local", function (err, user, info) {
+    if (err) {
+      return next(err);
+    }
+    if (!user) {
+      return res.redirect("/login-failure");
+    }
+
+    // // NEED TO CALL req.login()!!!
+
+    req.login(user, function (err) {
+      if (err) {
+        return next(err);
+      }
+      return res.redirect("/login-success");
+    });
+  })(req, res, next);
+});
 
 // TODO
 router.post("/register", async (req, res, next) => {
@@ -67,20 +87,19 @@ router.get("/register", (req, res, next) => {
  *
  * Also, look up what behaviour express session has without a maxage set
  */
-router.get("/protected-route",isAuthenticated, (req, res, next) => {
+router.get("/protected-route", isAuthenticated, (req, res, next) => {
   // This is how you check if a user is authenticated and protect a route.  You could turn this into a custom middleware to make it less redundant
 
-    res.send(
-      '<h1>You are authenticated</h1><p><a href="/logout">Logout and reload</a></p>'
-    );
-
+  res.send(
+    '<h1>You are authenticated</h1><p><a href="/logout">Logout and reload</a></p>'
+  );
 });
 
-router.get("/admin-route", isAdmin, (req,res,next)=>{
+router.get("/admin-route", isAdmin, (req, res, next) => {
   res.send(
     '<h1>You are an admin</h1><p><a href="/logout">Logout and reload</a></p>'
-  )
-})
+  );
+});
 
 // Visiting this route logs the user out
 router.get("/logout", (req, res, next) => {
